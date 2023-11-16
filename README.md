@@ -20,8 +20,7 @@ $ conda env create --file environment.yaml
 ```
 
 ## Run code
-
-데이터 생성부터 추론까지 한번에 할 수 있는 코드입니다.
+It's a code from training to inferencing.
 
 ```sh
 $ sh scripts/run.sh
