@@ -1,0 +1,12 @@
+path: input/
+encoder: resources/encoder/
+shift: 1
+train: train
+test: test
+submit: submission
+n_splits: 5
+seed: 42
+categorical_features:
+  - ...
+numerical_features:
+- ...
