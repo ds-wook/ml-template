@@ -1,7 +1,6 @@
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)  
 # ml-template
 This is a machine learning code template utilizing the `hydra` library.
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)  
 The code style has been configured to use Black, and the maximum line length has been set to 120 characters.
 
 ## Setting
