@@ -6,3 +6,6 @@ exclude =
     .gitignore,
     */migrations/*,
     __pycache__,
+per-file-ignores =
+    src/*/__init__.py:F401,
+    notebook/eda.py:F401
