@@ -7,7 +7,7 @@ import xgboost as xgb
 from catboost import CatBoostRegressor, Pool
 from omegaconf import DictConfig
 
-from models.base import BaseModel
+from models import BaseModel
 
 
 class XGBoostTrainer(BaseModel):

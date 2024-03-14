@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 from omegaconf import DictConfig
 
-from features.featurize import FeatureEngineer
+from features.create import FeatureEngineer
 
 
 def load_train_dataset(cfg: DictConfig) -> tuple[pd.DataFrame, pd.Series]:

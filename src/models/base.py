@@ -35,7 +35,7 @@ class BaseModel(ABC):
         X_valid: pd.DataFrame | np.ndarray | None = None,
         y_valid: pd.Series | np.ndarray | None = None,
     ):
-        ...
+        raise NotImplementedError
 
     def save_model(self, save_dir: Path) -> None:
         joblib.dump(self.result, save_dir)
@@ -64,11 +64,15 @@ class BaseModel(ABC):
             oof_preds[valid_idx] = (
                 model.predict(X_valid)
                 if isinstance(model, lgb.Booster)
-                else model.predict(xgb.DMatrix(X_valid))
-                if isinstance(model, xgb.Booster)
-                else model.predict(X_valid.to_numpy()).reshape(-1)
-                if isinstance(model, TabNetRegressor)
-                else model.predict(X_valid)
+                else (
+                    model.predict(xgb.DMatrix(X_valid))
+                    if isinstance(model, xgb.Booster)
+                    else (
+                        model.predict(X_valid.to_numpy()).reshape(-1)
+                        if isinstance(model, TabNetRegressor)
+                        else model.predict(X_valid)
+                    )
+                )
             )
             models[f"fold_{fold}"] = model
 

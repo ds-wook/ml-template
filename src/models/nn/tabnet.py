@@ -5,7 +5,7 @@ import torch
 from omegaconf import DictConfig
 from pytorch_tabnet.tab_model import TabNetRegressor
 
-from models.base import BaseModel
+from models import BaseModel
 
 
 class EarlyStoppingCallback:
