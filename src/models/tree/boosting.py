@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from catboost import CatBoostRegressor, Pool
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from models import BaseModel
 
@@ -24,8 +24,11 @@ class XGBoostTrainer(BaseModel):
         dtrain = xgb.DMatrix(X_train, y_train)
         dvalid = xgb.DMatrix(X_valid, y_valid)
 
+        params = OmegaConf.to_container(self.cfg.models.params)
+        params["seed"] = self.cfg.models.seed
+
         model = xgb.train(
-            dict(self.cfg.models.params),
+            params=params,
             dtrain=dtrain,
             evals=[(dtrain, "train"), (dvalid, "eval")],
             num_boost_round=self.cfg.models.num_boost_round,
@@ -50,10 +53,8 @@ class CatBoostTrainer(BaseModel):
         train_set = Pool(X_train, y_train, cat_features=self.cfg.features.categorical_features)
         valid_set = Pool(X_valid, y_valid, cat_features=self.cfg.features.categorical_features)
 
-        model = CatBoostRegressor(
-            random_state=self.cfg.models.seed,
-            **self.cfg.models.params,
-        )
+        params = OmegaConf.to_container(self.cfg.models.params)
+        model = CatBoostRegressor(random_state=self.cfg.models.seed, **params)
 
         model.fit(
             train_set,
@@ -79,11 +80,15 @@ class LightGBMTrainer(BaseModel):
         train_set = lgb.Dataset(X_train, y_train, categorical_feature=self.cfg.features.categorical_features)
         valid_set = lgb.Dataset(X_valid, y_valid, categorical_feature=self.cfg.features.categorical_features)
 
+        params = OmegaConf.to_container(self.cfg.models.params)
+        params["seed"] = self.cfg.models.seed
+
         model = lgb.train(
+            params=params,
             train_set=train_set,
             valid_sets=[train_set, valid_set],
-            params=dict(self.cfg.models.params),
             num_boost_round=self.cfg.models.num_boost_round,
+            categorical_feature=[*self.cfg.features.categorical_features],
             callbacks=[
                 lgb.log_evaluation(self.cfg.models.verbose_eval),
                 lgb.early_stopping(self.cfg.models.early_stopping_rounds),

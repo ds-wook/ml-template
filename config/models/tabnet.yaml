@@ -15,10 +15,11 @@ params:
   num_workers: 1
   mask_type: entmax
   verbose: 10
-  seed: 602
 
 eval_name:
   - train
   - valid
 eval_metric:
   - mae
+
+seed: 602

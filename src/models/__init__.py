@@ -1,8 +1,8 @@
 from omegaconf import DictConfig
 
 from .base import BaseModel
-from .nn import TabNetTrainer
-from .tree import CatBoostTrainer, LightGBMTrainer, XGBoostTrainer
+from .nn.tabnet import TabNetTrainer
+from .tree.boosting import CatBoostTrainer, LightGBMTrainer, XGBoostTrainer
 
 BulidModel = CatBoostTrainer | LightGBMTrainer | XGBoostTrainer | TabNetTrainer
 
