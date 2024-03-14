@@ -11,3 +11,6 @@ defaults:
   - experiment: wandb
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
+
+path: resources/models/
+results: 5fold-retention-lightgbm

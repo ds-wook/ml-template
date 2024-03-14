@@ -1,3 +1,5 @@
+name: tabnet
+
 params:
   lr: 0.05
   step_size: 50
@@ -14,11 +16,9 @@ params:
   mask_type: entmax
   verbose: 10
   seed: 602
+
 eval_name:
   - train
   - valid
 eval_metric:
   - mae
-path: resources/models/
-name: tabnet
-results: 5fold-tabnet
