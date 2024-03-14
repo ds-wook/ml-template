@@ -1,12 +1,7 @@
-defaults:
-  - _self_
-  - data: dataset
-  - models: lightgbm
-  - features: featurize
-  - experiment: wandb
-  - hydra: custom
-  - override hydra/hydra_logging: disabled
-  - override hydra/job_logging: disabled
+hydra:
+  run:
+    dir: .
+  output_subdir: null
 
 output:
   path: output
@@ -16,3 +11,12 @@ output:
 median_preds:
   - test_submission_43.93.csv
   - 5fold-mae-lightgbm.csv
+
+defaults:
+  - _self_
+  - data: dataset
+  - models: lightgbm
+  - features: featurize
+  - experiment: wandb
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
