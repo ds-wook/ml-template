@@ -14,3 +14,8 @@ params:
   lambda_l2: 0.001
   verbose: -1
   n_jobs: -1
+
+early_stopping_rounds: 100
+num_boost_round: 10000
+verbose_eval: 250
+seed: 42
