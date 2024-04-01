@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from omegaconf import DictConfig
 
-from features import BaseFeatureEngineer
+from generator import BaseFeatureEngineer
 
 
 class FeatureEngineer(BaseFeatureEngineer):
