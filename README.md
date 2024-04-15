@@ -11,7 +11,57 @@ The settings for the experimental environment are as follows.
 - RAM: 32GB
 - GPU: NVIDIA GeForce RTX 3090 Ti
 
-
+## Project Organization
+```
+├── LICENSE
+├── README.md
+├── config
+│   ├── data
+│   │   └── dataset.yaml
+│   ├── ensemble.yaml
+│   ├── experiment
+│   │   └── wandb.yaml
+│   ├── generator
+│   │   └── featurize.yaml
+│   ├── models
+│   │   ├── catboost.yaml
+│   │   ├── lightgbm.yaml
+│   │   ├── tabnet.yaml
+│   │   └── xgboost.yaml
+│   ├── predict.yaml
+│   └── train.yaml
+├── environment.yaml
+├── input
+├── output
+├── pyproject.toml
+├── resources
+│   ├── encoder
+│   └── models
+├── scripts
+│   └── run.sh
+└── src
+    ├── data
+    │   ├── __init__.py
+    │   └── dataset.py
+    ├── ensemble.py
+    ├── generator
+    │   ├── __init__.py
+    │   ├── base.py
+    │   └── featurize.py
+    ├── models
+    │   ├── __init__.py
+    │   ├── base.py
+    │   ├── nn
+    │   │   └── tabnet.py
+    │   └── tree
+    │       └── boosting.py
+    ├── predict.py
+    ├── train.py
+    └── utils
+        ├── __init__.py
+        ├── plot.py
+        └── utilies.py
+```
 ## Requirements
 
 I conducted the experiment using `hydra-core==1.2.0` version. Please install the library based on the following information.
