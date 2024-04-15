@@ -16,6 +16,7 @@ from pytorch_tabnet.tab_model import TabNetRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold
 from tqdm import tqdm
+from typing_extensions import Self
 
 
 @dataclass
@@ -52,7 +53,7 @@ class BaseModel(ABC):
 
         return model
 
-    def run_cv_training(self, X: pd.DataFrame, y: pd.Series) -> None:
+    def run_cv_training(self, X: pd.DataFrame, y: pd.Series) -> Self:
         oof_preds = np.zeros(X.shape[0])
         models = {}
         kfold = KFold(n_splits=self.cfg.data.n_splits, shuffle=True, random_state=self.cfg.data.seed)
@@ -84,3 +85,5 @@ class BaseModel(ABC):
         print(f"CV Score: {mean_absolute_error(y, oof_preds):.6f}")
 
         self.result = ModelResult(oof_preds=oof_preds, models=models)
+
+        return self
