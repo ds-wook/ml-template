@@ -30,10 +30,14 @@ The settings for the experimental environment are as follows.
 │   │   └── xgboost.yaml
 │   ├── predict.yaml
 │   └── train.yaml
+├── docs
 ├── environment.yaml
 ├── input
+├── notebooks
 ├── output
 ├── pyproject.toml
+├── reports
+│   └── figures
 ├── resources
 │   ├── encoder
 │   └── models
