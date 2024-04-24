@@ -73,6 +73,16 @@ class BaseModel(ABC):
 
         return model
 
+    def _predict(self, model: Any, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        if isinstance(model, xgb.Booster):
+            return model.predict(xgb.DMatrix(X))
+
+        elif isinstance(model, TabNetRegressor):
+            return model.predict(X.to_numpy()).reshape(-1)
+
+        else:
+            return model.predict(X)
+
     def run_cv_training(self, X: pd.DataFrame, y: pd.Series) -> Self:
         oof_preds = np.zeros(X.shape[0])
         models = {}
@@ -84,19 +94,8 @@ class BaseModel(ABC):
                 y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
 
                 model = self.fit(X_train, y_train, X_valid, y_valid)
-                oof_preds[valid_idx] = (
-                    model.predict(X_valid)
-                    if isinstance(model, lgb.Booster)
-                    else (
-                        model.predict(xgb.DMatrix(X_valid))
-                        if isinstance(model, xgb.Booster)
-                        else (
-                            model.predict(X_valid.to_numpy()).reshape(-1)
-                            if isinstance(model, TabNetRegressor)
-                            else model.predict(X_valid)
-                        )
-                    )
-                )
+                oof_preds[valid_idx] = self._predict(model, X_valid)
+
                 models[f"fold_{fold}"] = model
 
             del X_train, X_valid, y_train, y_valid
