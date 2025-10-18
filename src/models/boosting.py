@@ -7,8 +7,9 @@ from typing import Any
 
 import lightgbm as lgb
 import numpy as np
-import polars as pl
+import pandas as pd
 from omegaconf import OmegaConf
+from tqdm import tqdm
 from typing_extensions import Self
 
 from models.base import BaseModel
@@ -27,7 +28,6 @@ class LightGBMTrainer(BaseModel):
         features: list[str],
         cat_features: list[str],
         n_splits: int = 5,
-        split_type: str = "day_of_week",
         logger: logging.Logger = None,
     ) -> None:
         super().__init__(
@@ -41,20 +41,16 @@ class LightGBMTrainer(BaseModel):
             features,
             cat_features,
             n_splits,
-            split_type,
             logger,
         )
 
     def _fit(
         self: Self,
-        X_train: pl.DataFrame | np.ndarray,
-        y_train: pl.Series | np.ndarray,
-        X_valid: pl.DataFrame | np.ndarray | None = None,
-        y_valid: pl.Series | np.ndarray | None = None,
+        X_train: pd.DataFrame | np.ndarray,
+        y_train: pd.Series | np.ndarray,
+        X_valid: pd.DataFrame | np.ndarray | None = None,
+        y_valid: pd.Series | np.ndarray | None = None,
     ) -> lgb.Booster:
-        X_train, y_train = X_train[self.features].to_pandas(), y_train.to_pandas()
-        X_valid, y_valid = X_valid[self.features].to_pandas(), y_valid.to_pandas()
-
         # set params
         params = OmegaConf.to_container(self.params)
         params["seed"] = self.seed
@@ -95,17 +91,31 @@ class LightGBMTrainer(BaseModel):
 
         return model
 
-    def _predict(self: Self, X: pl.DataFrame | np.ndarray) -> np.ndarray:
-        return self.model.predict(
-            lgb.Dataset(
-                X[self.features].to_pandas(), categorical_feature=self.cat_features
-            )
-        )
+    def _predict(self: Self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        return self.model.predict(X[self.features])
 
-    def load_model(self: Self) -> lgb.Booster:
-        return lgb.Booster(model_file=Path(self.model_path) / f"{self.results}.model")
+    def load_model(self: Self) -> dict[str, lgb.Booster] | lgb.Booster:
+        if self.n_splits > 1:
+            models = {}
+            for fold in range(self.n_splits):
+                model = lgb.Booster(
+                    model_file=Path(self.model_path) / f"fold_{fold}.model"
+                )
+                models[fold] = model
+
+            return models
+
+        else:
+            return lgb.Booster(
+                model_file=Path(self.model_path) / f"{self.results}.model"
+            )
 
     def save_model(self: Self, save_dir: Path) -> None:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
-        self.model.save_model(str(save_dir / f"{self.results}.model"))
+
+        if self.result.models is not None:
+            for fold, model in tqdm(self.result.models.items(), desc="Saving models"):
+                model.save_model(save_dir / f"fold_{fold}.model")
+        else:
+            self.model.save_model(save_dir / f"{self.results}.model")

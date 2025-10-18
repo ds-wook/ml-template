@@ -53,7 +53,6 @@ class BaseModel(ABC):
 
     @abstractmethod
     def load_model(self: Self):
-        # return model
         raise NotImplementedError
 
     @abstractmethod

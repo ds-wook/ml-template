@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+  - data: boosting
+  - features: store
+  - models: lightgbm
+  - override hydra/hydra_logging: default
+  - override hydra/job_logging: default
+
+hydra:
+  run:
+    dir: ./resource/log/${models.results}/${now:%Y-%m-%d_%H-%M-%S}
+  output_subdir: null

@@ -1,0 +1,15 @@
+cat_features:
+  - HomePlanet
+  - CryoSleep
+  - Destination
+  - VIP
+  - Cabin
+  - Embarked
+
+num_features:
+  - Age
+  - RoomService
+  - FoodCourt
+  - ShoppingMall
+  - Spa
+  
