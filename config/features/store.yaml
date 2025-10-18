@@ -1,10 +1,9 @@
 cat_features:
   - HomePlanet
   - CryoSleep
+  - Cabin
   - Destination
   - VIP
-  - Cabin
-  - Embarked
 
 num_features:
   - Age

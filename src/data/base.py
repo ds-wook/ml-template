@@ -6,7 +6,8 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder, QuantileTransformer
+from category_encoders import OrdinalEncoder
+from sklearn.preprocessing import QuantileTransformer
 
 
 class BaseDataLoader(ABC):
@@ -35,7 +36,7 @@ class BaseDataLoader(ABC):
         self.cat_features = cat_features
 
     def _categorize_train_features(self, train_x: pd.DataFrame) -> pd.DataFrame:
-        le = LabelEncoder()
+        le = OrdinalEncoder()
         train_x[[*self.cat_features]] = le.fit_transform(train_x[[*self.cat_features]])
         joblib.dump(le, Path(self.encoder_path) / "label_encoder.pkl")
 

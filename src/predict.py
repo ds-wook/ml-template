@@ -35,4 +35,4 @@ def _main(cfg: DictConfig):
 
     submit = pd.read_csv(Path(cfg.data.path) / cfg.data.submit)
     submit[cfg.data.target] = preds
-    submit.to_csv(Path(cfg.data.path) / f"{cfg.models.results}.csv", index=False)
+    submit.to_csv(Path(cfg.output.path) / f"{cfg.models.results}.csv", index=False)

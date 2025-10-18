@@ -23,27 +23,27 @@ class BoostingDataLoader(BaseDataLoader):
         seed: int = 42,
     ):
         super().__init__(
-            logger,
-            seed,
-            path,
-            encoder_path,
-            train,
-            test,
-            submit,
-            target,
-            cat_features,
-            num_features,
+            logger=logger,
+            path=path,
+            encoder_path=encoder_path,
+            train=train,
+            test=test,
+            submit=submit,
+            target=target,
+            cat_features=cat_features,
+            num_features=num_features,
+            seed=seed,
         )
 
     def load_train_dataset(self) -> tuple[pd.DataFrame, pd.Series]:
         """
         Load train dataset
         """
+        print(self.path, self.train)
         self.logger.info("Loading train dataset")
 
-        train = pd.read_parquet(Path(self.path) / f"{self.train}.parquet")
+        train = pd.read_csv(Path(self.path) / f"{self.train}.csv")
         train = self._categorize_train_features(train)
-        train = self._numerical_train_scaling(train)
         train_x = train.drop(columns=[self.target])
         train_y = train[self.target]
 
@@ -55,9 +55,8 @@ class BoostingDataLoader(BaseDataLoader):
         """
         self.logger.info("Loading test dataset")
 
-        test = pd.read_parquet(Path(self.path) / f"{self.test}.parquet")
+        test = pd.read_csv(Path(self.path) / f"{self.test}.csv")
         test = self._categorize_test_features(test)
-        test = self._numerical_test_scaling(test)
         test_x = test.drop(columns=[self.target])
 
         return test_x

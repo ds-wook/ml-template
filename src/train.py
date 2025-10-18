@@ -15,21 +15,23 @@ def _main(cfg: DictConfig):
 
     # load dataset
     data_loader = instantiate(
-        cfg.models,
+        cfg.data,
         logger=logger,
         num_features=cfg.features.num_features,
         cat_features=cfg.features.cat_features,
     )
-    train_x, train_y = data_loader.load_train()
+    train_x, train_y = data_loader.load_train_dataset()
+
+    # merge num and cat features
+    features = [*cfg.features.num_features, *cfg.features.cat_features]
 
     # build model
     trainer = instantiate(
         cfg.models,
         logger=logger,
-        features=cfg.features.num_features,
+        features=features,
         cat_features=cfg.features.cat_features,
-        n_splits=cfg.data.n_splits,
-        split_type=cfg.data.split_type,
+        n_splits=cfg.models.n_splits,
     )
 
     # train model

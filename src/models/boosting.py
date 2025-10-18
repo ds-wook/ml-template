@@ -31,17 +31,17 @@ class LightGBMTrainer(BaseModel):
         logger: logging.Logger = None,
     ) -> None:
         super().__init__(
-            model_path,
-            results,
-            params,
-            early_stopping_rounds,
-            num_boost_round,
-            verbose_eval,
-            seed,
-            features,
-            cat_features,
-            n_splits,
-            logger,
+            model_path=model_path,
+            results=results,
+            params=params,
+            features=features,
+            cat_features=cat_features,
+            early_stopping_rounds=early_stopping_rounds,
+            num_boost_round=num_boost_round,
+            verbose_eval=verbose_eval,
+            seed=seed,
+            n_splits=n_splits,
+            logger=logger,
         )
 
     def _fit(
@@ -51,6 +51,8 @@ class LightGBMTrainer(BaseModel):
         X_valid: pd.DataFrame | np.ndarray | None = None,
         y_valid: pd.Series | np.ndarray | None = None,
     ) -> lgb.Booster:
+        X_train = X_train[self.features]
+        X_valid = X_valid[self.features]
         # set params
         params = OmegaConf.to_container(self.params)
         params["seed"] = self.seed
@@ -85,14 +87,15 @@ class LightGBMTrainer(BaseModel):
             train_set=train_set,
             valid_sets=[valid_set],
             num_boost_round=self.num_boost_round,
-            feval=self._competition_score_lgb,
             callbacks=callbacks,
         )
 
         return model
 
-    def _predict(self: Self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
-        return self.model.predict(X[self.features])
+    def _predict(
+        self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray
+    ) -> np.ndarray:
+        return model.predict(X[self.features])
 
     def load_model(self: Self) -> dict[str, lgb.Booster] | lgb.Booster:
         if self.n_splits > 1:

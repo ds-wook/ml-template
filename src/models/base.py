@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import gc
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,8 +8,11 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 from typing_extensions import Self
+
+from utils.metric import get_metrics
 
 
 @dataclass
@@ -77,29 +79,32 @@ class BaseModel(ABC):
         return model
 
     @abstractmethod
-    def _predict(self: Self, X: pd.DataFrame | np.ndarray):
+    def _predict(self: Self, model: Any, X: pd.DataFrame | np.ndarray):
         raise NotImplementedError
 
     def run_cv_training(
         self: Self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray
     ) -> Self:
-        oof_preds = np.zeros(X.shape[0])
+        oof_preds = np.zeros(y.shape[0])
         models = {}
 
-        with tqdm(self.n_splits, total=self.n_splits) as pbar:
-            for fold, (train_idx, valid_idx) in enumerate(pbar, 1):
-                X_train, X_valid = X[train_idx], X[valid_idx]
-                y_train, y_valid = y[train_idx], y[valid_idx]
+        kfold = StratifiedKFold(
+            n_splits=self.n_splits, shuffle=True, random_state=self.seed
+        )
+        k_splits = kfold.split(X, y)
 
-                if "xgboost" in self.results:
-                    X_train, X_valid = self._encode_categorical_count(X_train, X_valid)
+        with tqdm(k_splits, total=kfold.get_n_splits(X, y)) as pbar:
+            for fold, (train_idx, valid_idx) in enumerate(pbar):
+                X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]
+                y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
 
                 model = self.fit(X_train, y_train, X_valid, y_valid)
                 oof_preds[valid_idx] = self._predict(model, X_valid)
                 models[f"fold_{fold}"] = model
-                del X_train, X_valid, y_train, y_valid, model
-                gc.collect()
+                metrics = get_metrics(y_valid, oof_preds[valid_idx])
+                self.logger.info(f"Fold {fold} metrics: {metrics}")
+
+            self.logger.info(f"OOF metrics: {get_metrics(y, oof_preds)}")
 
         self.result = ModelResult(oof_preds=oof_preds, models=models)
-
         return self
