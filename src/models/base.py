@@ -94,7 +94,7 @@ class BaseModel(ABC):
         k_splits = kfold.split(X, y)
 
         with tqdm(k_splits, total=kfold.get_n_splits(X, y)) as pbar:
-            for fold, (train_idx, valid_idx) in enumerate(pbar):
+            for fold, (train_idx, valid_idx) in enumerate(pbar, 1):
                 X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]
                 y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
 

@@ -57,6 +57,5 @@ class BoostingDataLoader(BaseDataLoader):
 
         test = pd.read_csv(Path(self.path) / f"{self.test}.csv")
         test = self._categorize_test_features(test)
-        test_x = test.drop(columns=[self.target])
 
-        return test_x
+        return test

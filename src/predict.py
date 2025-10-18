@@ -15,9 +15,16 @@ def _main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
     logger.info(f"Selected model: {cfg.models.results}")
 
-    # load test dataset
-    data_loader = instantiate(cfg.data.loader)
-    test_x = data_loader.load_test()
+    # load dataset
+    data_loader = instantiate(
+        cfg.data,
+        logger=logger,
+        num_features=cfg.features.num_features,
+        cat_features=cfg.features.cat_features,
+    )
+    test_x = data_loader.load_test_dataset()
+    features = [*cfg.features.num_features, *cfg.features.cat_features]
+    test_x = test_x[features]
 
     # load model
     model = instantiate(
@@ -25,14 +32,18 @@ def _main(cfg: DictConfig):
         logger=logger,
         features=cfg.features.num_features,
         cat_features=cfg.features.cat_features,
-        n_splits=cfg.data.n_splits,
-        split_type=cfg.data.split_type,
+        n_splits=cfg.models.n_splits,
     )
     models = model.load_model()
 
-    # predict
-    preds = np.mean([model.predict(test_x) for model in models.values()])
+    preds = np.zeros(test_x.shape[0])
+    for fold, model in models.items():
+        preds += model.predict(test_x) / len(models)
 
-    submit = pd.read_csv(Path(cfg.data.path) / cfg.data.submit)
+    submit = pd.read_csv(Path(cfg.data.path) / f"{cfg.data.submit}.csv")
     submit[cfg.data.target] = preds
     submit.to_csv(Path(cfg.output.path) / f"{cfg.models.results}.csv", index=False)
+
+
+if __name__ == "__main__":
+    _main()

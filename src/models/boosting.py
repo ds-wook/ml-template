@@ -100,25 +100,26 @@ class LightGBMTrainer(BaseModel):
     def load_model(self: Self) -> dict[str, lgb.Booster] | lgb.Booster:
         if self.n_splits > 1:
             models = {}
-            for fold in range(self.n_splits):
-                model = lgb.Booster(
-                    model_file=Path(self.model_path) / f"fold_{fold}.model"
+            for model_file in os.listdir(Path(self.model_path) / f"{self.results}"):
+                models[model_file] = lgb.Booster(
+                    model_file=str(
+                        Path(self.model_path) / f"{self.results}" / model_file
+                    )
                 )
-                models[fold] = model
-
             return models
-
         else:
             return lgb.Booster(
-                model_file=Path(self.model_path) / f"{self.results}.model"
+                model_file=str(Path(self.model_path) / f"{self.results}.model")
             )
 
     def save_model(self: Self, save_dir: Path) -> None:
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir, exist_ok=True)
+        if not os.path.exists(save_dir / f"{self.results}"):
+            os.makedirs(save_dir / f"{self.results}", exist_ok=True)
 
         if self.result.models is not None:
             for fold, model in tqdm(self.result.models.items(), desc="Saving models"):
-                model.save_model(save_dir / f"fold_{fold}.model")
+                model.save_model(save_dir / f"{self.results}" / f"{fold}.model")
         else:
-            self.model.save_model(save_dir / f"{self.results}.model")
+            self.model.save_model(
+                save_dir / f"{self.results}" / f"{self.results}.model"
+            )
