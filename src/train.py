@@ -19,8 +19,6 @@ def _main(cfg: DictConfig):
         logger=logger,
         num_features=cfg.features.num_features,
         cat_features=cfg.features.cat_features,
-        n_splits=cfg.data.n_splits,
-        split_type=cfg.data.split_type,
     )
     train_x, train_y = data_loader.load_train()
 
