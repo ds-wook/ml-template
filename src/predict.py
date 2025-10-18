@@ -1,18 +1,50 @@
 from __future__ import annotations
 
+import logging
+from pathlib import Path
+
 import hydra
+import numpy as np
+import pandas as pd
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 
 @hydra.main(config_path="../config/", config_name="predict", version_base="1.3.1")
 def _main(cfg: DictConfig):
-    # load test dataset
-    data_loader = instantiate(cfg.data.loader)
-    test_x = data_loader.load_test()
-    test_x = test_x.to_pandas()
+    logger = logging.getLogger(__name__)
+    logger.info(f"Selected model: {cfg.models.results}")
+
+    # load dataset
+    data_loader = instantiate(
+        cfg.data,
+        logger=logger,
+        num_features=cfg.features.num_features,
+        cat_features=cfg.features.cat_features,
+    )
+    test_x = data_loader.load_test_dataset()
+    features = [*cfg.features.num_features, *cfg.features.cat_features]
+    test_x = test_x[features]
 
     # load model
-    trainer = instantiate(cfg.models)
+    model = instantiate(
+        cfg.models,
+        logger=logger,
+        features=cfg.features.num_features,
+        cat_features=cfg.features.cat_features,
+        n_splits=cfg.models.n_splits,
+    )
+    models = model.load_model()
 
-    preds = trainer.predict(test_x)
+    preds = np.mean(
+        [model.predict(test_x) for model in models.values()],
+        axis=0
+    )
+
+    submit = pd.read_csv(Path(cfg.data.path) / f"{cfg.data.submit}.csv")
+    submit[cfg.data.target] = preds
+    submit.to_csv(Path(cfg.output.path) / f"{cfg.models.results}.csv", index=False)
+
+
+if __name__ == "__main__":
+    _main()

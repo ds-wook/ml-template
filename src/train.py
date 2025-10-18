@@ -12,22 +12,33 @@ from omegaconf import DictConfig
 def _main(cfg: DictConfig):
     logger = logging.getLogger(__name__)
     logger.info(f"Selected model: {cfg.models.results}")
-    # load dataset
-    data_loader = instantiate(cfg.data.loader)
-    train_x, train_y = data_loader.load_train()
 
-    # save count mapping for later use
-    count_mapping_path = Path(cfg.data.encoder_path) / "count_mapping.pkl"
-    data_loader.save_count_mapping(count_mapping_path)
-    logger.info(f"Count mapping saved to {count_mapping_path}")
+    # load dataset
+    data_loader = instantiate(
+        cfg.data,
+        logger=logger,
+        num_features=cfg.features.num_features,
+        cat_features=cfg.features.cat_features,
+    )
+    train_x, train_y = data_loader.load_train_dataset()
+
+    # merge num and cat features
+    features = [*cfg.features.num_features, *cfg.features.cat_features]
 
     # build model
-    trainer = instantiate(cfg.models, logger=logger)
+    trainer = instantiate(
+        cfg.models,
+        logger=logger,
+        features=features,
+        cat_features=cfg.features.cat_features,
+        n_splits=cfg.models.n_splits,
+    )
+
     # train model
     trainer.run_cv_training(train_x, train_y)
 
     # save model
-    trainer.save_model(Path(cfg.models.model_path) / f"{cfg.models.results}.pkl")
+    trainer.save_model(Path(cfg.models.model_path))
 
 
 if __name__ == "__main__":

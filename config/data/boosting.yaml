@@ -1,0 +1,9 @@
+_target_: data.boosting.BoostingDataLoader
+
+target: Transported
+seed: 42
+path: input/spaceship-titanic/
+encoder_path: resource/data/
+train: train
+test: test
+submit: sample_submission
