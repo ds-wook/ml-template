@@ -1,7 +1,6 @@
 cat_features:
   - HomePlanet
   - CryoSleep
-  - Cabin
   - Destination
   - VIP
 
@@ -12,3 +11,8 @@ num_features:
   - ShoppingMall
   - Spa
   
+cat_feature_sizes:
+  - 5
+  - 4
+  - 5
+  - 4

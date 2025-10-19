@@ -109,6 +109,7 @@ class DeepTrainer(BaseModel):
         seed: int = 42,
         n_splits: int = 5,
         logger: logging.Logger = None,
+        cat_feature_sizes: list[int] = None,
     ):
         super().__init__(
             model_path=model_path,
@@ -130,7 +131,7 @@ class DeepTrainer(BaseModel):
 
         # Separate num and cat features
         self.num_features = [f for f in features if f not in cat_features]
-        self.cat_feature_sizes = []  # Will be set during training
+        self.cat_feature_sizes = cat_feature_sizes  # Will be set during training
 
         if self.device == "cpu" and device == "cuda":
             self.logger.warning("CUDA not available, using CPU instead")
@@ -313,3 +314,9 @@ class DeepTrainer(BaseModel):
             )
             model.eval()
             return model
+
+    def predict(
+        self: Self, model: nn.Module, X: pd.DataFrame | np.ndarray
+    ) -> np.ndarray:
+        """Make predictions with a trained model"""
+        return self._predict(model, X)
