@@ -1,4 +1,4 @@
 from .boosting import LightGBMTrainer
-from .deep import DeepModel
+from .deep import DeepTrainer
 
-__all__ = ["LightGBMTrainer", "DeepModel"]
+__all__ = ["LightGBMTrainer", "DeepTrainer"]

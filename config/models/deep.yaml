@@ -1,0 +1,21 @@
+_target_: models.deep.DeepTrainer
+
+results: 5fold-mlp-baseline
+model_path: resource/models/
+
+params: {}
+
+# Model architecture
+hidden_dims: [128, 64, 32]
+dropout: 0.3
+
+# Training params
+lr: 0.001
+epochs: 50
+batch_size: 64
+device: cuda
+
+# CV params
+n_splits: 5
+seed: 42
+
