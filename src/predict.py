@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from hydra.utils import instantiate
 from omegaconf import DictConfig
+from tqdm import tqdm
 
 
 @hydra.main(config_path="../config/", config_name="predict", version_base="1.3.1")
@@ -32,12 +33,13 @@ def _main(cfg: DictConfig):
         logger=logger,
         features=features,
         cat_features=cfg.features.cat_features,
+        cat_feature_sizes=cfg.features.cat_feature_sizes,
         n_splits=cfg.models.n_splits,
     )
     models = trainer.load_model()
 
     preds = np.mean(
-        [trainer.predict(model, test_x) for model in models.values()], axis=0
+        [trainer.predict(model, test_x) for model in tqdm(models.values())], axis=0
     )
 
     submit = pd.read_csv(Path(cfg.data.path) / f"{cfg.data.submit}.csv")

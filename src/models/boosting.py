@@ -29,6 +29,7 @@ class LightGBMTrainer(BaseModel):
         cat_features: list[str],
         n_splits: int = 5,
         logger: logging.Logger = None,
+        cat_feature_sizes: list[int] = None,
     ) -> None:
         super().__init__(
             model_path=model_path,
@@ -42,6 +43,7 @@ class LightGBMTrainer(BaseModel):
             seed=seed,
             n_splits=n_splits,
             logger=logger,
+            cat_feature_sizes=cat_feature_sizes,
         )
 
     def _fit(
