@@ -1,0 +1,11 @@
+_target_: data.deep.DeepDataLoader
+
+target: Transported
+seed: 42
+path: input/spaceship-titanic/
+encoder_path: resource/data/
+train: train
+test: test
+submit: sample_submission
+batch_size: 64
+
