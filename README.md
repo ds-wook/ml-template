@@ -31,12 +31,12 @@ $ uv sync
 ```sh
 uv run python src/train.py \
     data=boosting \
-    models=boosting
+    models=lightgbm
 ```
 
 #### inference
 ```sh
 uv run python src/predict.py \
     data=boosting \
-    models=boosting
+    models=lightgbm
 ```
