@@ -12,24 +12,44 @@ from .base import BaseDataLoader
 
 
 class TabularDataset(Dataset):
-    """PyTorch Dataset for tabular data"""
+    """PyTorch Dataset for tabular data with separate cat/num features"""
 
-    def __init__(self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray = None):
+    def __init__(
+        self,
+        X: pd.DataFrame | np.ndarray,
+        y: pd.Series | np.ndarray = None,
+        num_features: list[str] = None,
+        cat_features: list[str] = None,
+    ):
         if isinstance(X, pd.DataFrame):
-            X = X.values
+            if num_features is not None and cat_features is not None:
+                # Separate numerical and categorical features
+                self.X_num = torch.FloatTensor(X[num_features].values)
+                self.X_cat = torch.LongTensor(X[cat_features].values)
+            else:
+                # Fallback to treating all as numerical
+                self.X_num = torch.FloatTensor(X.values)
+                self.X_cat = None
+        else:
+            self.X_num = torch.FloatTensor(X)
+            self.X_cat = None
+
         if isinstance(y, pd.Series):
             y = y.values
-
-        self.X = torch.FloatTensor(X)
         self.y = torch.FloatTensor(y) if y is not None else None
 
     def __len__(self):
-        return len(self.X)
+        return len(self.X_num)
 
     def __getitem__(self, idx):
-        if self.y is not None:
-            return self.X[idx], self.y[idx]
-        return self.X[idx]
+        if self.X_cat is not None:
+            if self.y is not None:
+                return self.X_num[idx], self.X_cat[idx], self.y[idx]
+            return self.X_num[idx], self.X_cat[idx]
+        else:
+            if self.y is not None:
+                return self.X_num[idx], self.y[idx]
+            return self.X_num[idx]
 
 
 class DeepDataLoader(BaseDataLoader):

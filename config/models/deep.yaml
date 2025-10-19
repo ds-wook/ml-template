@@ -7,11 +7,12 @@ params: {}
 
 # Model architecture
 hidden_dims: [128, 64, 32]
+embedding_dim: 8
 dropout: 0.3
 
 # Training params
 lr: 0.001
-epochs: 50
+epochs: 10
 batch_size: 64
 device: cuda
 
