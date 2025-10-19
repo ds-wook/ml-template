@@ -11,8 +11,3 @@ num_features:
   - ShoppingMall
   - Spa
   
-cat_feature_sizes:
-  - 5
-  - 4
-  - 5
-  - 4

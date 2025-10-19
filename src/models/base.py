@@ -35,7 +35,6 @@ class BaseModel(ABC):
         seed: int = 42,
         n_splits: int = 5,
         logger: logging.Logger = None,
-        cat_feature_sizes: list[int] = None,
     ) -> None:
         self.model_path = model_path
         self.results = results
@@ -49,7 +48,6 @@ class BaseModel(ABC):
         self.cat_features = cat_features
         self.n_splits = n_splits
         self.logger = logger
-        self.cat_feature_sizes = cat_feature_sizes
 
     @abstractmethod
     def save_model(self, save_dir: Path) -> None:

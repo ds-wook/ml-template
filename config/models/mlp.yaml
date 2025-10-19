@@ -1,4 +1,4 @@
-_target_: models.deep.DeepTrainer
+_target_: models.mlp.DeepTrainer
 
 results: 5fold-mlp-baseline
 model_path: resource/models/
@@ -6,9 +6,19 @@ model_path: resource/models/
 params: {}
 
 # Model architecture
-hidden_dims: [128, 64, 32]
+hidden_dims: 
+ - 128
+ - 64
+ - 32
+
 embedding_dim: 8
 dropout: 0.3
+
+cat_feature_sizes:
+  - 5
+  - 4
+  - 5
+  - 4
 
 # Training params
 lr: 0.001

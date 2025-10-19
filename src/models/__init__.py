@@ -1,4 +1,4 @@
 from .boosting import LightGBMTrainer
-from .deep import DeepTrainer
+from .mlp import DeepTrainer
 
 __all__ = ["LightGBMTrainer", "DeepTrainer"]
