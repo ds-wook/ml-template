@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from typing_extensions import Self
 
-from data.deep import TabularDataset
+from data.mlp import TabularDataset
 from models.base import BaseModel
 
 
