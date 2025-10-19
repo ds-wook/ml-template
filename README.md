@@ -20,7 +20,7 @@ $ pip install uv
 
 ### Create virtual enviroment
 For an existing project, simply sync the environment:
-```
+```bash
 $ uv sync
 ```
 
@@ -28,15 +28,15 @@ $ uv sync
 `uv run` allows you to execute Python scripts inside the managed virtual environment.
 
 #### train
-```sh
-uv run python src/train.py \
+```bash
+$ uv run python src/train.py \
     data=boosting \
     models=lightgbm
 ```
 
 #### inference
-```sh
-uv run python src/predict.py \
+```bash
+$ uv run python src/predict.py \
     data=boosting \
     models=lightgbm
 ```
