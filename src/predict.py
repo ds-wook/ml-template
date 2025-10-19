@@ -27,18 +27,17 @@ def _main(cfg: DictConfig):
     test_x = test_x[features]
 
     # load model
-    model = instantiate(
+    trainer = instantiate(
         cfg.models,
         logger=logger,
-        features=cfg.features.num_features,
+        features=features,
         cat_features=cfg.features.cat_features,
         n_splits=cfg.models.n_splits,
     )
-    models = model.load_model()
+    models = trainer.load_model()
 
     preds = np.mean(
-        [model.predict(test_x) for model in models.values()],
-        axis=0
+        [trainer.predict(model, test_x) for model in models.values()], axis=0
     )
 
     submit = pd.read_csv(Path(cfg.data.path) / f"{cfg.data.submit}.csv")

@@ -97,6 +97,11 @@ class LightGBMTrainer(BaseModel):
     ) -> np.ndarray:
         return model.predict(X[self.features])
 
+    def predict(
+        self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray
+    ) -> np.ndarray:
+        return self._predict(model, X)
+
     def load_model(self: Self) -> dict[str, lgb.Booster] | lgb.Booster:
         if self.n_splits > 1:
             models = {}

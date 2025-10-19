@@ -29,10 +29,14 @@ $ uv sync
 
 #### train
 ```sh
-uv run python src/train.py
+uv run python src/train.py \
+    data=boosting \
+    models=boosting
 ```
 
 #### inference
 ```sh
-uv run python src/predict.py
+uv run python src/predict.py \
+    data=boosting \
+    models=boosting
 ```
