@@ -1,0 +1,11 @@
+name: submission
+
+preds:
+- 5fold-mlp-baseline
+- 5fold-lightgbm-baseline
+
+weights: 
+  - 0.8
+  - 0.2
+
+method: linear
