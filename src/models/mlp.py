@@ -96,7 +96,9 @@ class DeepTrainer(BaseModel):
         n_splits: int = 5,
         logger: logging.Logger = None,
         cat_feature_sizes: list[int] = None,
-    ):
+        early_stopping_rounds: int = 10,
+        verbose_eval: int = 10,
+    ) -> None:
         super().__init__(
             model_path=model_path,
             results=results,
@@ -114,7 +116,8 @@ class DeepTrainer(BaseModel):
         self.epochs = epochs
         self.batch_size = batch_size
         self.device = device if torch.cuda.is_available() else "cpu"
-
+        self.early_stopping_rounds = early_stopping_rounds
+        self.verbose_eval = verbose_eval
         # Separate num and cat features
         self.num_features = [f for f in features if f not in cat_features]
         self.cat_feature_sizes = cat_feature_sizes  # Will be set during training
@@ -174,6 +177,11 @@ class DeepTrainer(BaseModel):
         criterion = nn.BCELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
 
+        # Early stopping setup
+        best_val_loss = float("inf")
+        patience_counter = 0
+        best_model_state = None
+
         # Training loop
         for epoch in range(self.epochs):
             model.train()
@@ -204,13 +212,38 @@ class DeepTrainer(BaseModel):
                     loss = criterion(pred, y)
                     val_loss += loss.item()
 
-            if (epoch + 1) % 10 == 0:
-                avg_train_loss = train_loss / len(train_loader)
-                avg_val_loss = val_loss / len(valid_loader)
-                self.logger.info(
-                    f"Epoch {epoch + 1}/{self.epochs} - "
-                    f"Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}"
-                )
+            avg_train_loss = train_loss / len(train_loader)
+            avg_val_loss = val_loss / len(valid_loader)
+
+            # Early stopping check
+            if avg_val_loss < best_val_loss:
+                best_val_loss = avg_val_loss
+                patience_counter = 0
+                best_model_state = model.state_dict().copy()
+                if (epoch + 1) % 10 == 0:
+                    self.logger.info(
+                        f"Epoch {epoch + 1}/{self.epochs} - "
+                        f"Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f} *"
+                    )
+            else:
+                patience_counter += 1
+                if (epoch + 1) % 10 == 0:
+                    self.logger.info(
+                        f"Epoch {epoch + 1}/{self.epochs} - "
+                        f"Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}"
+                    )
+
+                if patience_counter >= self.early_stopping_rounds:
+                    self.logger.info(
+                        f"Early stopping at epoch {epoch + 1}. "
+                        f"Best val loss: {best_val_loss:.4f}"
+                    )
+                    break
+
+        # Restore best model
+        if best_model_state is not None:
+            model.load_state_dict(best_model_state)
+            self.logger.info(f"Restored best model with val loss: {best_val_loss:.4f}")
 
         return model
 

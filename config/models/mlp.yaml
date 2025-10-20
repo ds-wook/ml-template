@@ -22,9 +22,10 @@ cat_feature_sizes:
 
 # Training params
 lr: 0.001
-epochs: 10
+epochs: 100
 batch_size: 64
 device: cuda
+early_stopping_rounds: 10
 
 # CV params
 n_splits: 5
