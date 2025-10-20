@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 
 import hydra
-from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 
@@ -14,7 +13,7 @@ def _main(cfg: DictConfig):
     logger.info(f"Selected model: {cfg.models.results}")
 
     # load dataset
-    data_loader = instantiate(
+    data_loader = hydra.utils.instantiate(
         cfg.data,
         logger=logger,
         num_features=cfg.features.num_features,
@@ -26,7 +25,7 @@ def _main(cfg: DictConfig):
     features = [*cfg.features.num_features, *cfg.features.cat_features]
 
     # build model
-    trainer = instantiate(
+    trainer = hydra.utils.instantiate(
         cfg.models,
         logger=logger,
         features=features,

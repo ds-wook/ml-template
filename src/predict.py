@@ -6,7 +6,6 @@ from pathlib import Path
 import hydra
 import numpy as np
 import pandas as pd
-from hydra.utils import instantiate
 from omegaconf import DictConfig
 from tqdm import tqdm
 
@@ -17,7 +16,7 @@ def _main(cfg: DictConfig):
     logger.info(f"Selected model: {cfg.models.results}")
 
     # load dataset
-    data_loader = instantiate(
+    data_loader = hydra.utils.instantiate(
         cfg.data,
         logger=logger,
         num_features=cfg.features.num_features,
@@ -28,7 +27,7 @@ def _main(cfg: DictConfig):
     test_x = test_x[features]
 
     # load model
-    trainer = instantiate(
+    trainer = hydra.utils.instantiate(
         cfg.models,
         logger=logger,
         features=features,
