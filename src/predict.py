@@ -33,8 +33,6 @@ def _main(cfg: DictConfig):
         logger=logger,
         features=features,
         cat_features=cfg.features.cat_features,
-        cat_feature_sizes=cfg.features.cat_feature_sizes,
-        n_splits=cfg.models.n_splits,
     )
     models = trainer.load_model()
 

@@ -31,7 +31,6 @@ def _main(cfg: DictConfig):
         logger=logger,
         features=features,
         cat_features=cfg.features.cat_features,
-        n_splits=cfg.models.n_splits,
     )
 
     # train model
