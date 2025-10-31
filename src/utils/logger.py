@@ -11,14 +11,10 @@ def setup_logger(log_file: str):
         logger.handlers.clear()
 
     # Create a file handler to log messages to a file
-    file_handler = logging.FileHandler(
-        log_file, mode="w"
-    )  # Open file in write mode to overwrite on each run
+    file_handler = logging.FileHandler(log_file, mode="w")  # Open file in write mode to overwrite on each run
 
     # Set a logging format
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
 
     # Create a console handler to log messages to the terminal

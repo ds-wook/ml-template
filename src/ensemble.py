@@ -2,8 +2,8 @@ from pathlib import Path
 
 import hydra
 import numpy as np
-import pandas as pd
 from omegaconf import DictConfig
+import pandas as pd
 from scipy.stats import rankdata
 from tqdm import tqdm
 
@@ -34,25 +34,18 @@ def ensemble_predictions(
             return 1 / res
 
         case "geometric":
-            numerator = np.average(
-                [np.log(p) for p in predictions], weights=weights, axis=0
-            )
+            numerator = np.average([np.log(p) for p in predictions], weights=weights, axis=0)
             res = np.exp(numerator)
 
         case "rank":
-            res = np.average(
-                [rankdata(p) for p in predictions], weights=weights, axis=0
-            )
+            res = np.average([rankdata(p) for p in predictions], weights=weights, axis=0)
             return res / (len(res) + 1)
 
         case "sigmoid":
             # Convert predictions to numpy arrays for element-wise operations
             pred_arrays = [np.asarray(p) for p in predictions]
             eps = 1e-15
-            logit_values = [
-                np.log(np.clip(p, eps, 1 - eps) / (1 - np.clip(p, eps, 1 - eps)))
-                for p in pred_arrays
-            ]
+            logit_values = [np.log(np.clip(p, eps, 1 - eps) / (1 - np.clip(p, eps, 1 - eps))) for p in pred_arrays]
             result = np.average(logit_values, weights=weights, axis=0)
 
             return 1 / (1 + np.exp(-result))
@@ -89,12 +82,8 @@ def _main(cfg: DictConfig):
     ]
 
     # Calculate average predictions
-    submit[cfg.data.target] = ensemble_predictions(
-        preds, cfg.blends.weights, cfg.blends.method
-    )
-    submit[cfg.data.target] = submit[cfg.data.target].apply(
-        lambda x: True if x > 0.5 else False
-    )
+    submit[cfg.data.target] = ensemble_predictions(preds, cfg.blends.weights, cfg.blends.method)
+    submit[cfg.data.target] = submit[cfg.data.target].apply(lambda x: True if x > 0.5 else False)
     submit.to_csv(Path(cfg.output.path) / f"{cfg.output.name}.csv", index=False)
 
 

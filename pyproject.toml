@@ -31,3 +31,42 @@ dependencies = [
     "gensim (>=4.3.3,<5.0.0)",
     "line-profiler (>=5.0.0,<6.0.0)",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (주석 및 문자열에서도 무시)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+split-on-trailing-comma = true
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.3",
+]
