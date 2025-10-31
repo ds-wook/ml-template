@@ -2,9 +2,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
-def get_metrics(
-    y_true: np.ndarray | list, y_pred: np.ndarray | list, threshold: float = 0.5
-) -> dict[str, float]:
+def get_metrics(y_true: np.ndarray | list, y_pred: np.ndarray | list, threshold: float = 0.5) -> dict[str, float]:
     """
     여러 이진 분류 지표 반환
 

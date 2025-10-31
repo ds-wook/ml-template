@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
+import logging
 from pathlib import Path
 
+from category_encoders import OrdinalEncoder
 import joblib
 import pandas as pd
-from category_encoders import OrdinalEncoder
 from sklearn.preprocessing import QuantileTransformer
 
 

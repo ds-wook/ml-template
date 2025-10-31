@@ -110,13 +110,9 @@ class DeepDataLoader(BaseDataLoader):
 
         return test
 
-    def create_dataloader(
-        self, X: pd.DataFrame, y: pd.Series = None, shuffle: bool = True
-    ) -> DataLoader:
+    def create_dataloader(self, X: pd.DataFrame, y: pd.Series = None, shuffle: bool = True) -> DataLoader:
         """
         Create PyTorch DataLoader from pandas DataFrame
         """
         dataset = TabularDataset(X, y)
-        return DataLoader(
-            dataset, batch_size=self.batch_size, shuffle=shuffle, num_workers=0
-        )
+        return DataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle, num_workers=0)

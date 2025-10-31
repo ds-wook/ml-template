@@ -3,14 +3,13 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import lightgbm as lgb
 import numpy as np
-import pandas as pd
 from omegaconf import OmegaConf
+import pandas as pd
 from tqdm import tqdm
-from typing_extensions import Self
 
 from models.base import BaseModel
 
@@ -92,30 +91,20 @@ class LightGBMTrainer(BaseModel):
 
         return model
 
-    def _predict(
-        self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray
-    ) -> np.ndarray:
+    def _predict(self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         return model.predict(X[self.features])
 
-    def predict(
-        self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray
-    ) -> np.ndarray:
+    def predict(self: Self, model: lgb.Booster, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         return self._predict(model, X)
 
     def load_model(self: Self) -> dict[str, lgb.Booster] | lgb.Booster:
         if self.n_splits > 1:
             models = {}
             for model_file in os.listdir(Path(self.model_path) / f"{self.results}"):
-                models[model_file] = lgb.Booster(
-                    model_file=str(
-                        Path(self.model_path) / f"{self.results}" / model_file
-                    )
-                )
+                models[model_file] = lgb.Booster(model_file=str(Path(self.model_path) / f"{self.results}" / model_file))
             return models
         else:
-            return lgb.Booster(
-                model_file=str(Path(self.model_path) / f"{self.results}.model")
-            )
+            return lgb.Booster(model_file=str(Path(self.model_path) / f"{self.results}.model"))
 
     def save_model(self: Self, save_dir: Path) -> None:
         if not os.path.exists(save_dir / f"{self.results}"):
@@ -125,6 +114,4 @@ class LightGBMTrainer(BaseModel):
             for fold, model in tqdm(self.result.models.items(), desc="Saving models"):
                 model.save_model(save_dir / f"{self.results}" / f"{fold}.model")
         else:
-            self.model.save_model(
-                save_dir / f"{self.results}" / f"{self.results}.model"
-            )
+            self.model.save_model(save_dir / f"{self.results}" / f"{self.results}.model")

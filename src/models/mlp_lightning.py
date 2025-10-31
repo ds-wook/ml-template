@@ -1,36 +1,46 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
+import lightning as L
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
+from lightning.pytorch.loggers import CSVLogger
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from typing_extensions import Self
 
 from data.mlp import TabularDataset
 from models.base import BaseModel
 
 
-class MLP(nn.Module):
-    """MLP with separate handling for categorical and numerical features"""
+class MLPLightningModule(L.LightningModule):
+    """PyTorch Lightning Module for MLP with separate handling for categorical and numerical features"""
 
     def __init__(
         self,
         num_features_dim: int,
         cat_feature_sizes: list[int],
         embedding_dim: int = 8,
-        hidden_dims: list[int] | None = None,
+        hidden_dims: list[int] = [128, 64],
         dropout: float = 0.2,
+        lr: float = 1e-3,
     ):
         super().__init__()
-        if hidden_dims is None:
-            hidden_dims = [128, 64]
+        self.save_hyperparameters()
 
         # Embedding layers for categorical features
-        self.embeddings = nn.ModuleList([nn.Embedding(num_classes, embedding_dim) for num_classes in cat_feature_sizes])
+        self.embeddings = nn.ModuleList(
+            [
+                nn.Embedding(num_classes, embedding_dim)
+                for num_classes in cat_feature_sizes
+            ]
+        )
 
         # Calculate total input dimension
         total_cat_dim = len(cat_feature_sizes) * embedding_dim
@@ -47,7 +57,7 @@ class MLP(nn.Module):
                 nn.Dropout(dropout),
             ]
             input_dim = h
-        layers += [nn.Linear(input_dim, 1), nn.Sigmoid()]
+        layers += [nn.Linear(input_dim, 1)]
 
         self.mlp = nn.Sequential(*layers)
 
@@ -70,10 +80,62 @@ class MLP(nn.Module):
         else:
             x = x_num
 
-        return self.mlp(x)
+        return torch.sigmoid(self.mlp(x))
+
+    def training_step(self, batch, batch_idx):
+        x_num, x_cat, y = batch
+        y_hat = self(x_num, x_cat).squeeze()
+        loss = F.binary_cross_entropy(y_hat, y)
+
+        self.log("train_loss", loss, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x_num, x_cat, y = batch
+        y_hat = self(x_num, x_cat).squeeze()
+        loss = F.binary_cross_entropy(y_hat, y)
+
+        self.log("val_loss", loss, prog_bar=True)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
 
-class DeepTrainer(BaseModel):
+class TabularDataModule(L.LightningDataModule):
+    """PyTorch Lightning DataModule for tabular data"""
+
+    def __init__(
+        self,
+        train_dataset: TabularDataset,
+        val_dataset: TabularDataset,
+        batch_size: int = 64,
+        num_workers: int = 0,
+    ):
+        super().__init__()
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )
+
+
+class DeepTrainerLightning(BaseModel):
     def __init__(
         self,
         model_path: str,
@@ -81,7 +143,7 @@ class DeepTrainer(BaseModel):
         params: dict[str, Any],
         features: list[str],
         cat_features: list[str],
-        hidden_dims: list[int] | None = None,
+        hidden_dims: list[int] = [128, 64],
         embedding_dim: int = 8,
         dropout: float = 0.2,
         lr: float = 1e-3,
@@ -105,8 +167,6 @@ class DeepTrainer(BaseModel):
             n_splits=n_splits,
             logger=logger,
         )
-        if hidden_dims is None:
-            hidden_dims = [128, 64]
         self.hidden_dims = hidden_dims
         self.embedding_dim = embedding_dim
         self.dropout = dropout
@@ -129,8 +189,8 @@ class DeepTrainer(BaseModel):
         y_train: pd.Series | np.ndarray,
         X_valid: pd.DataFrame | np.ndarray | None = None,
         y_valid: pd.Series | np.ndarray | None = None,
-    ) -> nn.Module:
-        """Train a single model"""
+    ) -> MLPLightningModule:
+        """Train a single model using PyTorch Lightning"""
         X_train = X_train[self.features]
         X_valid = X_valid[self.features]
         y_train = y_train.astype(np.float32)
@@ -138,103 +198,102 @@ class DeepTrainer(BaseModel):
 
         # Calculate categorical feature sizes (vocabulary size for each cat feature)
         if not self.cat_feature_sizes:
-            self.cat_feature_sizes = [int(X_train[col].max()) + 1 for col in self.cat_features]
+            self.cat_feature_sizes = [
+                int(X_train[col].max()) + 1 for col in self.cat_features
+            ]
             self.logger.info(f"Categorical feature sizes: {self.cat_feature_sizes}")
-            self.logger.info(f"Num features: {len(self.num_features)}, Cat features: {len(self.cat_features)}")
+            self.logger.info(
+                f"Num features: {len(self.num_features)}, Cat features: {len(self.cat_features)}"
+            )
+
+        # Create datasets
+        train_dataset = TabularDataset(
+            X_train, y_train, self.num_features, self.cat_features
+        )
+        valid_dataset = TabularDataset(
+            X_valid, y_valid, self.num_features, self.cat_features
+        )
+
+        # Create data module
+        data_module = TabularDataModule(
+            train_dataset=train_dataset,
+            val_dataset=valid_dataset,
+            batch_size=self.batch_size,
+        )
 
         # Create model
         num_features_dim = len(self.num_features)
-        model = MLP(
+        model = MLPLightningModule(
             num_features_dim=num_features_dim,
             cat_feature_sizes=self.cat_feature_sizes,
             embedding_dim=self.embedding_dim,
             hidden_dims=self.hidden_dims,
             dropout=self.dropout,
-        ).to(self.device)
+            lr=self.lr,
+        )
 
-        # Create dataloaders
-        train_dataset = TabularDataset(X_train, y_train, self.num_features, self.cat_features)
-        valid_dataset = TabularDataset(X_valid, y_valid, self.num_features, self.cat_features)
+        # Setup callbacks
+        callbacks = [
+            EarlyStopping(
+                monitor="val_loss",
+                patience=self.early_stopping_rounds,
+                mode="min",
+            ),
+            ModelCheckpoint(
+                monitor="val_loss",
+                mode="min",
+                save_top_k=1,
+                filename="best_model",
+            ),
+        ]
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
-        valid_loader = DataLoader(valid_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        # Setup logger
+        csv_logger = CSVLogger(
+            save_dir=Path(self.model_path) / f"{self.results}",
+            name="logs",
+        )
 
-        # Training setup
-        criterion = nn.BCELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
+        # Create trainer
+        trainer = L.Trainer(
+            max_epochs=self.epochs,
+            callbacks=callbacks,
+            logger=csv_logger,
+            accelerator="gpu" if self.device == "cuda" else "cpu",
+            devices=1,
+            enable_progress_bar=True,
+            enable_model_summary=True,
+        )
 
-        # Early stopping setup
-        best_val_loss = float("inf")
-        patience_counter = 0
-        best_model_state = None
+        # Train the model
+        trainer.fit(model, data_module)
 
-        # Training loop
-        for epoch in range(self.epochs):
-            model.train()
-            train_loss = 0.0
-            for x_num, x_cat, y in train_loader:
-                x_num = x_num.to(self.device)
-                x_cat = x_cat.to(self.device)
-                y = y.to(self.device)
-
-                pred = model(x_num, x_cat).squeeze()
-                loss = criterion(pred, y)
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
-
-            # Validation
-            model.eval()
-            val_loss = 0.0
-            with torch.no_grad():
-                for x_num, x_cat, y in valid_loader:
-                    x_num = x_num.to(self.device)
-                    x_cat = x_cat.to(self.device)
-                    y = y.to(self.device)
-
-                    pred = model(x_num, x_cat).squeeze()
-                    loss = criterion(pred, y)
-                    val_loss += loss.item()
-
-            avg_train_loss = train_loss / len(train_loader)
-            avg_val_loss = val_loss / len(valid_loader)
-
-            # Early stopping check
-            if avg_val_loss < best_val_loss:
-                best_val_loss = avg_val_loss
-                patience_counter = 0
-                best_model_state = model.state_dict().copy()
-                if (epoch + 1) % 10 == 0:
-                    self.logger.info(
-                        f"Epoch {epoch + 1}/{self.epochs} - "
-                        f"Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f} *"
-                    )
-            else:
-                patience_counter += 1
-                if (epoch + 1) % 10 == 0:
-                    self.logger.info(
-                        f"Epoch {epoch + 1}/{self.epochs} - "
-                        f"Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}"
-                    )
-
-                if patience_counter >= self.early_stopping_rounds:
-                    self.logger.info(f"Early stopping at epoch {epoch + 1}. Best val loss: {best_val_loss:.4f}")
-                    break
-
-        # Restore best model
-        if best_model_state is not None:
-            model.load_state_dict(best_model_state)
-            self.logger.info(f"Restored best model with val loss: {best_val_loss:.4f}")
+        # Load the best model
+        best_model_path = trainer.checkpoint_callback.best_model_path
+        if best_model_path:
+            model = MLPLightningModule.load_from_checkpoint(
+                best_model_path,
+                num_features_dim=num_features_dim,
+                cat_feature_sizes=self.cat_feature_sizes,
+                embedding_dim=self.embedding_dim,
+                hidden_dims=self.hidden_dims,
+                dropout=self.dropout,
+                lr=self.lr,
+            )
+            self.logger.info(f"Loaded best model from {best_model_path}")
 
         return model
 
-    def _predict(self: Self, model: nn.Module, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+    def _predict(
+        self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray
+    ) -> np.ndarray:
         """Make predictions with a trained model"""
         X = X[self.features]
-        dataset = TabularDataset(X, num_features=self.num_features, cat_features=self.cat_features)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        dataset = TabularDataset(
+            X, num_features=self.num_features, cat_features=self.cat_features
+        )
+        loader = DataLoader(
+            dataset, batch_size=self.batch_size, shuffle=False, num_workers=0
+        )
 
         model.eval()
         preds = []
@@ -270,7 +329,7 @@ class DeepTrainer(BaseModel):
                 save_dir / f"{self.results}" / f"{self.results}.pth",
             )
 
-    def load_model(self: Self) -> dict[str, nn.Module] | nn.Module:
+    def load_model(self: Self) -> dict[str, MLPLightningModule] | MLPLightningModule:
         """Load trained models"""
         num_features_dim = len(self.num_features)
 
@@ -278,13 +337,14 @@ class DeepTrainer(BaseModel):
             models = {}
             for model_file in os.listdir(Path(self.model_path) / f"{self.results}"):
                 if model_file.endswith(".pth"):
-                    model = MLP(
+                    model = MLPLightningModule(
                         num_features_dim=num_features_dim,
                         cat_feature_sizes=self.cat_feature_sizes,
                         embedding_dim=self.embedding_dim,
                         hidden_dims=self.hidden_dims,
                         dropout=self.dropout,
-                    ).to(self.device)
+                        lr=self.lr,
+                    )
                     model.load_state_dict(
                         torch.load(
                             Path(self.model_path) / f"{self.results}" / model_file,
@@ -295,13 +355,14 @@ class DeepTrainer(BaseModel):
                     models[model_file.replace(".pth", "")] = model
             return models
         else:
-            model = MLP(
+            model = MLPLightningModule(
                 num_features_dim=num_features_dim,
                 cat_feature_sizes=self.cat_feature_sizes,
                 embedding_dim=self.embedding_dim,
                 hidden_dims=self.hidden_dims,
                 dropout=self.dropout,
-            ).to(self.device)
+                lr=self.lr,
+            )
             model.load_state_dict(
                 torch.load(
                     Path(self.model_path) / f"{self.results}.pth",
@@ -311,6 +372,8 @@ class DeepTrainer(BaseModel):
             model.eval()
             return model
 
-    def predict(self: Self, model: nn.Module, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+    def predict(
+        self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray
+    ) -> np.ndarray:
         """Make predictions with a trained model"""
         return self._predict(model, X)
