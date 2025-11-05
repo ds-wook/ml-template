@@ -33,7 +33,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff>=0.1.0"]
+dev = [
+    "ruff>=0.1.0",
+]
 
 [tool.ruff]
 line-length = 120
