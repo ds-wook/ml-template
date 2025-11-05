@@ -5,8 +5,8 @@ from pathlib import Path
 
 import hydra
 import numpy as np
-import pandas as pd
 from omegaconf import DictConfig
+import pandas as pd
 from tqdm import tqdm
 
 
@@ -35,9 +35,7 @@ def _main(cfg: DictConfig):
     )
     models = trainer.load_model()
 
-    preds = np.mean(
-        [trainer.predict(model, test_x) for model in tqdm(models.values())], axis=0
-    )
+    preds = np.mean([trainer.predict(model, test_x) for model in tqdm(models.values())], axis=0)
 
     submit = pd.read_csv(Path(cfg.data.path) / f"{cfg.data.submit}.csv")
     submit[cfg.data.target] = preds

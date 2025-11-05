@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
-from typing_extensions import Self
 
 from utils.metric import get_metrics
 
@@ -82,15 +81,11 @@ class BaseModel(ABC):
     def _predict(self: Self, model: Any, X: pd.DataFrame | np.ndarray):
         raise NotImplementedError
 
-    def run_cv_training(
-        self: Self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray
-    ) -> Self:
+    def run_cv_training(self: Self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray) -> Self:
         oof_preds = np.zeros(y.shape[0])
         models = {}
 
-        kfold = StratifiedKFold(
-            n_splits=self.n_splits, shuffle=True, random_state=self.seed
-        )
+        kfold = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=self.seed)
         k_splits = kfold.split(X, y)
 
         with tqdm(k_splits, total=kfold.get_n_splits(X, y)) as pbar:
