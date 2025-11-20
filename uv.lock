@@ -1778,7 +1778,7 @@ wheels = [
 [[package]]
 name = "ml-template"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "catboost" },
     { name = "category-encoders" },
