@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 import pandas as pd
 from tqdm import tqdm
 
-from models.base import BaseModel
+from ml_template.models.base import BaseModel
 
 
 class LightGBMTrainer(BaseModel):

@@ -1,4 +1,4 @@
-_target_: models.boosting.LightGBMTrainer
+_target_: ml_template.models.boosting.LightGBMTrainer
 
 params:
   boosting_type: gbdt

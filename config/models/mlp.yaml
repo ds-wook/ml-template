@@ -1,4 +1,4 @@
-_target_: models.mlp.DeepTrainer
+_target_: ml_template.models.mlp.DeepTrainer
 
 results: 5fold-mlp-baseline
 model_path: resource/models/

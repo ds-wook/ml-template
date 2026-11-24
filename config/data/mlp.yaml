@@ -1,4 +1,4 @@
-_target_: data.mlp.DeepDataLoader
+_target_: ml_template.data.mlp.DeepDataLoader
 
 target: Transported
 seed: 42
