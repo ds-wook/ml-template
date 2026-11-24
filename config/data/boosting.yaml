@@ -1,4 +1,4 @@
-_target_: data.boosting.BoostingDataLoader
+_target_: ml_template.data.boosting.BoostingDataLoader
 
 target: Transported
 seed: 42

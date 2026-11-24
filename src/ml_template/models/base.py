@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-from utils.metric import get_metrics
+from ml_template.utils.metric import get_metrics
 
 
 @dataclass

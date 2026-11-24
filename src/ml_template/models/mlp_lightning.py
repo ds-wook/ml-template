@@ -1,22 +1,21 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import lightning as L
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
+from lightning.pytorch.loggers import CSVLogger
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
-from lightning.pytorch.loggers import CSVLogger
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from typing_extensions import Self
 
-from data.mlp import TabularDataset
-from models.base import BaseModel
+from ml_template.data.mlp import TabularDataset
+from ml_template.models.base import BaseModel
 
 
 class MLPLightningModule(L.LightningModule):
@@ -35,12 +34,7 @@ class MLPLightningModule(L.LightningModule):
         self.save_hyperparameters()
 
         # Embedding layers for categorical features
-        self.embeddings = nn.ModuleList(
-            [
-                nn.Embedding(num_classes, embedding_dim)
-                for num_classes in cat_feature_sizes
-            ]
-        )
+        self.embeddings = nn.ModuleList([nn.Embedding(num_classes, embedding_dim) for num_classes in cat_feature_sizes])
 
         # Calculate total input dimension
         total_cat_dim = len(cat_feature_sizes) * embedding_dim
@@ -198,21 +192,13 @@ class DeepTrainerLightning(BaseModel):
 
         # Calculate categorical feature sizes (vocabulary size for each cat feature)
         if not self.cat_feature_sizes:
-            self.cat_feature_sizes = [
-                int(X_train[col].max()) + 1 for col in self.cat_features
-            ]
+            self.cat_feature_sizes = [int(X_train[col].max()) + 1 for col in self.cat_features]
             self.logger.info(f"Categorical feature sizes: {self.cat_feature_sizes}")
-            self.logger.info(
-                f"Num features: {len(self.num_features)}, Cat features: {len(self.cat_features)}"
-            )
+            self.logger.info(f"Num features: {len(self.num_features)}, Cat features: {len(self.cat_features)}")
 
         # Create datasets
-        train_dataset = TabularDataset(
-            X_train, y_train, self.num_features, self.cat_features
-        )
-        valid_dataset = TabularDataset(
-            X_valid, y_valid, self.num_features, self.cat_features
-        )
+        train_dataset = TabularDataset(X_train, y_train, self.num_features, self.cat_features)
+        valid_dataset = TabularDataset(X_valid, y_valid, self.num_features, self.cat_features)
 
         # Create data module
         data_module = TabularDataModule(
@@ -283,17 +269,11 @@ class DeepTrainerLightning(BaseModel):
 
         return model
 
-    def _predict(
-        self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray
-    ) -> np.ndarray:
+    def _predict(self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         """Make predictions with a trained model"""
         X = X[self.features]
-        dataset = TabularDataset(
-            X, num_features=self.num_features, cat_features=self.cat_features
-        )
-        loader = DataLoader(
-            dataset, batch_size=self.batch_size, shuffle=False, num_workers=0
-        )
+        dataset = TabularDataset(X, num_features=self.num_features, cat_features=self.cat_features)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
 
         model.eval()
         preds = []
@@ -372,8 +352,6 @@ class DeepTrainerLightning(BaseModel):
             model.eval()
             return model
 
-    def predict(
-        self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray
-    ) -> np.ndarray:
+    def predict(self: Self, model: MLPLightningModule, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         """Make predictions with a trained model"""
         return self._predict(model, X)

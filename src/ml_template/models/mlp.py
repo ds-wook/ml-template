@@ -10,8 +10,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data.mlp import TabularDataset
-from models.base import BaseModel
+from ml_template.data.mlp import TabularDataset
+from ml_template.models.base import BaseModel
 
 
 class MLP(nn.Module):
